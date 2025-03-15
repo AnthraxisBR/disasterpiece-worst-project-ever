@@ -1,7 +1,6 @@
 
 
-source ./modules/models/account.sh
-source ./modules/models/entry.sh
+source ./modules/database.sh
 
 account_id=$1
 

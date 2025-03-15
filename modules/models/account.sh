@@ -13,7 +13,7 @@ ACCOUNT_ID_FILE=$DB_DIRECTORY"id/account_ids.json"
 
 
 get_latest_account_id() {
-  current_account_id=$(jq -r '.[-1]' "$ACCOUNT_ID_FILE")
+  current_account_id=$(get_index_in_file "$(cat "$ACCOUNT_ID_FILE")" 1)
   # if theres no account yet, set the current_account_id to 0
   if [ "$current_account_id" == "null" ]; then
     current_account_id=0
