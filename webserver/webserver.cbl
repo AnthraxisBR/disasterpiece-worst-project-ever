@@ -104,7 +104,7 @@
 
            CALL "accept" USING BY VALUE SERVER-FD,
                                        BY REFERENCE CLIENT-ADDRESS,
-                                       BY VALUE CLIENT-ADDR-LEN
+                                       BY REFERENCE CLIENT-ADDR-LEN
                                        RETURNING CLIENT-FD.
 
            DISPLAY "DEBUG: CLIENT-FD after accept: " CLIENT-FD.
@@ -126,7 +126,7 @@
                DISPLAY "DEBUG: CLIENT-FD: " CLIENT-FD
                CALL "recv" USING BY REFERENCE CLIENT-FD,
                                 BY REFERENCE CHUNK-BUFFER,
-                                BY VALUE CHUNK-SIZE,
+                                BY REFERENCE CHUNK-SIZE,
                                 BY VALUE 0
                                 RETURNING RECEIVED-SIZE
 

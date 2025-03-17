@@ -23,57 +23,104 @@
        01 REQUEST-BUFFER PIC X(1024).
        01 REQUEST-SIZE PIC 9(9) COMP-5.
        01 RESPONSE PIC X(128) VALUE "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nOK".
+       01 RESPONSE-SIZE PIC 9(9) COMP-5 VALUE 52.
 
        01 RETURN-CODE-LOCAL PIC S9(9) COMP-5.
 
        PROCEDURE DIVISION.
 
-       CALL "htons" USING BY VALUE PORT RETURNING PORT.
+           CALL "htons" USING BY VALUE PORT RETURNING PORT.
 
-       *> Create socket with SOCK_STREAM (TCP)
-       CALL "socket" USING BY VALUE 2, 1, 0 RETURNING SERVER-FD.
-       IF SERVER-FD < 0 THEN
-           DISPLAY "Error: Could not create socket."
-           STOP RUN
-       ELSE
-           DISPLAY "Socket created successfully."
-       END-IF
+           *> Create socket with SOCK_STREAM (TCP)
+           CALL "socket" USING BY VALUE 2, 1, 0 RETURNING SERVER-FD.
+           IF SERVER-FD < 0 THEN
+               DISPLAY "Error: Could not create socket."
+               STOP RUN
+           ELSE
+               DISPLAY "Socket created successfully."
+           END-IF
 
-       *> Bind the socket
-       CALL "bind" USING BY VALUE SERVER-FD,
-                                  BY CONTENT CLIENT-ADDRESS,
-                                  BY VALUE LENGTH OF CLIENT-ADDRESS
-                                  RETURNING RETURN-CODE-LOCAL.
-       IF RETURN-CODE-LOCAL < 0 THEN
-           DISPLAY "Error: Binding socket failed."
-           STOP RUN
-       ELSE
-           DISPLAY "Socket bound successfully."
-       END-IF
+           *> Bind the socket
+           CALL "bind" USING BY VALUE SERVER-FD,
+                                      BY CONTENT CLIENT-ADDRESS,
+                                      BY VALUE LENGTH OF CLIENT-ADDRESS
+                                      RETURNING RETURN-CODE-LOCAL.
+           IF RETURN-CODE-LOCAL < 0 THEN
+               DISPLAY "Error: Binding socket failed."
+               STOP RUN
+           ELSE
+               DISPLAY "Socket bound successfully."
+           END-IF
 
-       *> Listen for incoming connections
-       CALL "listen" USING BY VALUE SERVER-FD, BY VALUE 5 RETURNING RETURN-CODE-LOCAL.
-       IF RETURN-CODE-LOCAL < 0 THEN
-           DISPLAY "Error: Listen failed."
-           STOP RUN
-       ELSE
-           DISPLAY "Socket is listening."
-       END-IF
+           *> Listen for incoming connections
+           CALL "listen" USING BY VALUE SERVER-FD, BY VALUE 5 RETURNING RETURN-CODE-LOCAL.
+           IF RETURN-CODE-LOCAL < 0 THEN
+               DISPLAY "Error: Listen failed."
+               STOP RUN
+           ELSE
+               DISPLAY "Socket is listening."
+           END-IF
 
-       DISPLAY "Waiting for client connection..."
-       DISPLAY "DEBUG: SERVER-FD: " SERVER-FD
-       DISPLAY "DEBUG: CLIENT-FD: " CLIENT-FD
+           DISPLAY "Waiting for client connection..."
+           DISPLAY "DEBUG: SERVER-FD: " SERVER-FD
+           DISPLAY "DEBUG: CLIENT-FD: " CLIENT-FD
 
-       CALL "accept" USING BY VALUE SERVER-FD,
-                                       BY REFERENCE CLIENT-ADDRESS,
-                                       BY VALUE LENGTH OF CLIENT-ADDRESS
-                                       RETURNING CLIENT-FD.
+           CALL "accept" USING BY VALUE SERVER-FD,
+                                           BY REFERENCE CLIENT-ADDRESS,
+                                           BY REFERENCE LENGTH OF CLIENT-ADDRESS
+                                           RETURNING CLIENT-FD.
 
-       IF CLIENT-FD < 0 THEN
-           DISPLAY "Error: Accept failed."
-           STOP RUN
-       ELSE
-           DISPLAY "Client connection accepted with CLIENT-FD: " CLIENT-FD
-       END-IF
+           IF CLIENT-FD < 0 THEN
+               DISPLAY "Error: Accept failed."
+               STOP RUN
+           ELSE
+               DISPLAY "Client connection accepted with CLIENT-FD: " CLIENT-FD
+           END-IF
+
+           CALL "recv" USING BY VALUE CLIENT-FD,
+                                    BY REFERENCE REQUEST-BUFFER,
+                                    BY VALUE LENGTH OF REQUEST-BUFFER,
+                                    BY VALUE 0
+                                    RETURNING REQUEST-SIZE.
+
+           IF REQUEST-SIZE < 0 THEN
+               DISPLAY "Error: recv failed."
+               STOP RUN
+           ELSE
+               DISPLAY "Received " REQUEST-SIZE " bytes from client."
+               DISPLAY "Client Message: " REQUEST-BUFFER
+           END-IF.
+
+           SEND-RESPONSE.
+
+       SEND-RESPONSE.
+           DISPLAY "Response: " RESPONSE
+           DISPLAY "Response size: " LENGTH OF RESPONSE
+
+           CALL "send" USING BY VALUE CLIENT-FD
+                               BY REFERENCE RESPONSE
+                               BY VALUE LENGTH OF RESPONSE
+                               BY VALUE 0
+                               RETURNING RETURN-CODE-LOCAL
+
+           DISPLAY "DEBUG: send RETURN CODE: " RETURN-CODE-LOCAL
+
+
+           IF RETURN-CODE-LOCAL > 0 THEN
+               DISPLAY "Bytes sent: " RETURN-CODE-LOCAL
+           ELSE
+               DISPLAY "Error: Send failed"
+               DISPLAY "Error Code: " RETURN-CODE-LOCAL
+           END-IF
+
+           CALL "usleep" USING BY VALUE 500000.  *> Sleep for 500 milliseconds
+
+           CALL "shutdown" USING BY VALUE CLIENT-FD,
+                                       BY VALUE 2         *> SHUT_RDWR
+                                      RETURNING RETURN-CODE-LOCAL
+
+           CALL "close" USING BY REFERENCE CLIENT-FD
+
+           DISPLAY "Response sent: " RESPONSE.
 
        STOP RUN.
