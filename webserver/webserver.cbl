@@ -1,5 +1,5 @@
        IDENTIFICATION DIVISION.
-       PROGRAM-ID. Simple-HTTP-Server.
+       PROGRAM-ID. Server.
 
        ENVIRONMENT DIVISION.
        CONFIGURATION SECTION.
