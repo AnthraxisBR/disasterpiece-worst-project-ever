@@ -6,6 +6,7 @@
        SPECIAL-NAMES.
            CALL-CONVENTION 1 IS C-FUNCTIONS.
 
+
        DATA DIVISION.
        WORKING-STORAGE SECTION.
 
@@ -22,7 +23,12 @@
 
        01 REQUEST-BUFFER PIC X(1024).
        01 REQUEST-SIZE PIC 9(9) COMP-5.
-       01 RESPONSE PIC X(128) VALUE "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nOK".
+       01 RESPONSE PIC X(128) VALUE
+          "HTTP/1.1 200 OK" & X"0D0A" &
+          "Content-Length: 2" & X"0D0A" &
+          "Connection: close" & X"0D0A" &
+          X"0D0A" & "OK".
+
        01 RESPONSE-SIZE PIC 9(9) COMP-5 VALUE 52.
 
        01 RETURN-CODE-LOCAL PIC S9(9) COMP-5.
@@ -99,28 +105,33 @@
 
            CALL "send" USING BY VALUE CLIENT-FD
                                BY REFERENCE RESPONSE
-                               BY VALUE LENGTH OF RESPONSE
+                               BY VALUE 66
                                BY VALUE 0
-                               RETURNING RETURN-CODE-LOCAL
+                               RETURNING RETURN-CODE-LOCAL.
 
-           DISPLAY "DEBUG: send RETURN CODE: " RETURN-CODE-LOCAL
+           DISPLAY "DEBUG: send RETURN CODE: " RETURN-CODE-LOCAL.
 
+           *>IF RETURN-CODE-LOCAL < 0 THEN
+           *>    DISPLAY "ERROR: send failed with code: " RETURN-CODE-LOCAL.
+           *>    CALL "perror" USING BY REFERENCE "send".
+           *>    STOP RUN.
 
            IF RETURN-CODE-LOCAL > 0 THEN
                DISPLAY "Bytes sent: " RETURN-CODE-LOCAL
            ELSE
                DISPLAY "Error: Send failed"
                DISPLAY "Error Code: " RETURN-CODE-LOCAL
-           END-IF
+           END-IF.
 
-           CALL "usleep" USING BY VALUE 500000.  *> Sleep for 500 milliseconds
+           DISPLAY "Closing connection..."
 
-           CALL "shutdown" USING BY VALUE CLIENT-FD,
-                                       BY VALUE 2         *> SHUT_RDWR
-                                      RETURNING RETURN-CODE-LOCAL
+           CALL "usleep" USING BY VALUE 100000. *> 100ms
 
-           CALL "close" USING BY REFERENCE CLIENT-FD
+           CALL "close" USING BY VALUE CLIENT-FD RETURNING RETURN-CODE-LOCAL.
+           DISPLAY "DEBUG: close RETURN CODE: " RETURN-CODE-LOCAL.
+
 
            DISPLAY "Response sent: " RESPONSE.
+
 
        STOP RUN.
