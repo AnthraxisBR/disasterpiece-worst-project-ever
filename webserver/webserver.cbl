@@ -9,6 +9,8 @@
        DATA DIVISION.
        WORKING-STORAGE SECTION.
             COPY VARIABLES.
+       FILE SECTION.
+            FD RESPONSE-FILE.
 
        PROCEDURE DIVISION.
 

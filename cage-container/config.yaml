@@ -1,0 +1,14 @@
+rootfs: /var/cage-container
+network:
+  namespace: cage-container
+  address: 10.100.0.2/16
+  net_interface: veth0
+  veth_peer: veth1
+applications:
+  - type: sh
+    command: "./webserver"
+    limits:
+      memory: 128M
+      cpu: 0.5
+  - type: sh
+    command: "./cgroup_monitor.sh"

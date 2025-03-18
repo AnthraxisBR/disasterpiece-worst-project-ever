@@ -39,5 +39,8 @@
 
        01 SHELL-COMMAND        PIC X(1024).
        01 RESPONSE-FILE        PIC X(1024).
+       01 RESPONSE-FILE-NAME   PIC X(1024).
 
        01 PROCESS-ID           PIC 9(9) COMP-5.
+       01 PROCESS-ID-STRING    PIC X(9).
+       01 DELETE-COMMAND       PIC X(1024).
