@@ -1,8 +1,8 @@
 # THE FINAL DISASTERPIECE OF PROGRAMMING
 
-## Be careful, don't test it in your machine, run it inside a VM or a container PLEASE!
+## Be careful, don't test this in your machine, run it inside a VM or a container PLEASE!
 
-This is a ERP project, this project is a disasterpiece of programming, it's a mess, it's a disaster, it's a nightmare, it's a disasterpiece.
+This is a ERP project, using COBOL, Shell Script, Lua and C running in a custom container manager.
 
 # Webserver
 
