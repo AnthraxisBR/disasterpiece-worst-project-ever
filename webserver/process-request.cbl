@@ -74,40 +74,18 @@
        HANDLE-ROUTING.
             DISPLAY "Calling external router...".
 
-            CALL "getpid" GIVING PROCESS-ID
 
-            MOVE PROCESS-ID TO PROCESS-ID-STRING
+            CALL STATIC "router_wrapper"
+                USING BY REFERENCE HTTP-METHOD
+                      BY REFERENCE URL-PATH
+                      BY REFERENCE REQUEST-BODY
+                      BY REFERENCE RESPONSE-BUFFER
+                      BY VALUE LENGTH OF RESPONSE-BUFFER
+                RETURNING RESPONSE-SIZE.
 
-            MOVE "/tmp/output_" TO RESPONSE-FILE
-            STRING RESPONSE-FILE PROCESS-ID-STRING ".txt" DELIMITED BY SIZE INTO RESPONSE-FILE
 
-            *> Define system command with output redirection
-            MOVE "routes.sh " TO SHELL-COMMAND.
-            STRING SHELL-COMMAND HTTP-METHOD " " URL-PATH " " REQUEST-BODY " > " RESPONSE-FILE " 2>&1"
-                   DELIMITED BY SIZE INTO SHELL-COMMAND
-
-            DISPLAY "DEBUG: Executing: " SHELL-COMMAND
-
-            CALL "system" USING SHELL-COMMAND.
-
-            DISPLAY "DEBUG: Router executed, reading response file: " RESPONSE-FILE
-
-            ASSIGN RESPONSE-FILE TO RESPONSE-FILE-NAME
-
-            OPEN INPUT RESPONSE-FILE-NAME
-
-            READ RESPONSE-FILE-NAME INTO RESPONSE-BUFFER
-                 AT END DISPLAY "ERROR: Response file not found!"
-                 NOT AT END COMPUTE RESPONSE-SIZE = FUNCTION LENGTH(RESPONSE-BUFFER)
-            END-READ
-
-            CLOSE RESPONSE-FILE-NAME
-
-            MOVE "rm " TO DELETE-COMMAND.
-            STRING DELETE-COMMAND RESPONSE-FILE DELIMITED BY SIZE INTO DELETE-COMMAND
-            CALL "system" USING DELETE-COMMAND.
-
-            DISPLAY "DEBUG: Response file read successfully. Size: " RESPONSE-SIZE
+            DISPLAY "DEBUG: Router response received."
+            DISPLAY "Response: " RESPONSE-BUFFER.
 
             PERFORM SEND-RESPONSE
 

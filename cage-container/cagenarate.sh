@@ -9,6 +9,9 @@ VETH_PEER="veth1"
 
 ROOTFS=$(grep '^rootfs:' $CONFIG_FILE | awk '{print $2}' | tr -d '"' | tr -d '\n' | tr -d '\r')
 CGROUP_PATH="$ROOTFS/sys/fs/cgroup"
+PROJECT_PATH=$1
+
+echo $PROJECT_PATH
 
 NET_NAMESPACE=$(grep 'namespace:' $CONFIG_FILE | awk '{print $2}' | tr -d '"' | tr -d '\n' | tr -d '\r')
 NET_IP=$(grep 'address:' $CONFIG_FILE | awk '{print $2}' | tr -d '"' | tr -d '\n' | tr -d '\r')
@@ -76,15 +79,16 @@ fuser -k "$ROOTFS" || true
 pkill -9 -f "$ROOTFS" || true
 sync
 sleep 1
-mkdir -p "$ROOTFS/bin" "$ROOTFS/etc" "$ROOTFS/tmp" "$ROOTFS/proc" "$ROOTFS/logs" "$ROOTFS/usr/bin"
+mkdir -p "$ROOTFS/bin" "$ROOTFS/etc" "$ROOTFS/tmp" "$ROOTFS/proc" "$ROOTFS/logs" "$ROOTFS/usr/bin" "$ROOTFS/app"
+
 
 cp /bin/sh "$ROOTFS/bin/"
 cp /usr/bin/env "$ROOTFS/usr/bin/"
 cp /usr/bin/cgexec "$ROOTFS/bin/"
 mount -t proc proc "$ROOTFS/proc"
 
-cp webserver "$ROOTFS/webserver"
-chmod +x "$ROOTFS/webserver"
+cp webserver/webserver "$ROOTFS/app/webserver"
+chmod +x "$ROOTFS/app/webserver"
 
 echo "[LOG] Configuring isolated network..."
 ip netns add $NET_NAMESPACE
@@ -138,7 +142,7 @@ if [ ! -f "/proc/self/ns/cgroup" ]; then
     exit 1
 fi
 
-echo "[LOG] Creating new cgroup namespace..."
+cp -r "$PROJECT_PATH" "$ROOTFS/app"
 
 mksquashfs "$ROOTFS" /var/cage-container.img -comp xz -e proc sys dev run tmp || {
     echo "[ERROR] Failed to create SquashFS image"
@@ -152,11 +156,13 @@ if [[ -f "$ROOTFS/webserver" ]]; then
     if mount | grep -q "/mnt/cage-container"; then
         echo "[LOG] Unmounting previous SquashFS image..."
         umount /mnt/cage-container || true
+        losetup -d /dev/loop0 || true
+
     fi
     mkdir -p /mnt/cage-container
     mount -o loop /var/cage-container.img /mnt/cage-container
 
-    unshare --user --map-root-user --pid --fork --mount-proc chroot "/mnt/cage-container" /bin/sh -c "./webserver" &
+    unshare --user --map-root-user --pid --fork --mount-proc chroot "/mnt/cage-container" /bin/sh -c "cd /app && ./webserver" &
     CAGE_PID=$!
 
     echo "$CAGE_PID" > "$ROOTFS/sys/fs/cgroup/cpu/cage-container/cgroup.procs"

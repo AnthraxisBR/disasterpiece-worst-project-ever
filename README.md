@@ -22,7 +22,7 @@ sudo ldconfig
 Start the webserver with the following command:
 ```bash
 cd webserver
-cobc -x -free -o webserver webserver.cbl
+./build.sh
 ./webserver
 ```
 
@@ -47,3 +47,8 @@ mksquashfs /var/cage-container $ROOTFS -comp xz -e proc
 
 The cage container provide a container manager tool written in lua, you can use the following command to start the container:
 ```bash
+apt install lua5.3
+sudo apt install lua-filesystem 
+lua cage-manager.lua start
+```
+

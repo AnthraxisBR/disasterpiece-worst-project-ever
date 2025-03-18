@@ -2,15 +2,22 @@
        PROGRAM-ID. SimpleServer.
 
        ENVIRONMENT DIVISION.
+
        CONFIGURATION SECTION.
-       SPECIAL-NAMES.
-           CALL-CONVENTION 1 IS C-FUNCTIONS.
+
+
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT RESPONSE-FILE ASSIGN TO "response.tmp"
+               ORGANIZATION IS LINE SEQUENTIAL.
 
        DATA DIVISION.
+       FILE SECTION.
+       FD RESPONSE-FILE.
+       01 RESPONSE-RECORD PIC X(512). *> Define file record structure
+
        WORKING-STORAGE SECTION.
             COPY VARIABLES.
-       FILE SECTION.
-            FD RESPONSE-FILE.
 
        PROCEDURE DIVISION.
 
